@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新车交付验车核对表 (2024-2025 精准版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .card { border: 1px solid #e5e7eb !important; box-shadow: none !important; break-inside: avoid; }
+            textarea { border: none !important; resize: none !important; }
+        }
+        .checkbox-custom:checked + label { text-decoration: line-through; color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen pb-10">
+
+    <!-- Header -->
+    <header class="bg-white border-b sticky top-0 z-10 no-print">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-blue-600">新车交付验车助手</h1>
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                导出 PDF / 打印
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-6">
+        <!-- Title and Warning -->
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold mb-2">新车交付验车核对表 (2024-2025 精准版)</h2>
+            <p class="text-sm text-gray-500 italic">核心准则：先洗车、再验车、后付款。记录所有疑问于交车确认单。</p>
+        </div>
+
+        <!-- 拒收标准 -->
+        <section class="mb-8 bg-red-50 border border-red-200 rounded-xl p-5 card">
+            <h3 class="text-red-700 font-bold text-lg mb-3 flex items-center gap-2">
+                ⚠️ 拒收标准 (一票否决项)
+            </h3>
+            <div class="space-y-4">
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="reject-1" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                        <label for="reject-1" class="font-medium text-red-900">里程：仪表盘里程 > 50km (超过 100km 建议拒收)</label>
+                    </div>
+                    <textarea placeholder="添加备注..." class="ml-8 text-sm p-2 border rounded-md w-full bg-white/50 focus:bg-white transition"></textarea>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="reject-2" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                        <label for="reject-2" class="font-medium text-red-900">库存：国产车 > 6个月，进口车 > 12个月</label>
+                    </div>
+                    <textarea placeholder="添加备注..." class="ml-8 text-sm p-2 border rounded-md w-full bg-white/50 focus:bg-white transition"></textarea>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="reject-3" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                        <label for="reject-3" class="font-medium text-red-900">日期：玻璃、轮胎、电瓶晚于整车出厂日期</label>
+                    </div>
+                    <textarea placeholder="添加备注..." class="ml-8 text-sm p-2 border rounded-md w-full bg-white/50 focus:bg-white transition"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 一、身份与年份 -->
+        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
+            <h3 class="font-bold text-lg border-b pb-2 mb-4">一、 车辆身份与年份核验</h3>
+            <div class="overflow-x-auto mb-4">
+                <table class="w-full text-sm text-center border">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="border p-2">VIN代码</th><th class="border p-2">年份</th>
+                            <th class="border p-2">VIN代码</th><th class="border p-2">年份</th>
+                            <th class="border p-2">VIN代码</th><th class="border p-2">年份</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="border p-2 font-bold">L</td><td class="border p-2">2020</td><td class="border p-2 font-bold">M</td><td class="border p-2">2021</td><td class="border p-2 font-bold">N</td><td class="border p-2">2022</td></tr>
+                        <tr><td class="border p-2 font-bold">P</td><td class="border p-2">2023</td><td class="border p-2 font-bold">R</td><td class="border p-2">2024</td><td class="border p-2 font-bold">S</td><td class="border p-2">2025</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="space-y-4">
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step1-1" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-blue-600">
+                        <label for="step1-1" class="font-medium">核对三处 VIN 码一致（B柱铭牌、挡风玻璃、发动机舱）</label>
+                    </div>
+                    <textarea placeholder="VIN码记录..." class="ml-8 text-sm p-2 border rounded-md w-full"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 二、玻璃与轮胎 -->
+        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
+            <h3 class="font-bold text-lg border-b pb-2 mb-4">二、 玻璃与轮胎日期 (公式核算)</h3>
+            <div class="bg-blue-50 p-4 rounded-lg mb-4 text-sm text-blue-800">
+                <p><strong>玻璃公式：</strong> 数字(年) + 点(月)。左点(7-点数)，右点(13-点数)。</p>
+                <p><strong>轮胎公式：</strong> 4位数字 (周周年年)。如 1524 即 24年第15周。</p>
+            </div>
+            <div class="space-y-4">
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step2-1" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-blue-600">
+                        <label for="step2-1" class="font-medium">玻璃生产日期早于整车（全车 6-8 块玻璃）</label>
+                    </div>
+                    <textarea placeholder="各处玻璃日期备注..." class="ml-8 text-sm p-2 border rounded-md w-full"></textarea>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step2-2" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-blue-600">
+                        <label for="step2-2" class="font-medium">轮胎生产日期早于整车，且四条日期相近</label>
+                    </div>
+                    <textarea placeholder="轮胎 DOT 码备注..." class="ml-8 text-sm p-2 border rounded-md w-full"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 三、机械与功能 -->
+        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
+            <h3 class="font-bold text-lg border-b pb-2 mb-4">三、 机械、内饰与电器测试</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step3-1" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                        <label for="step3-1" class="text-sm">发动机舱：机油清亮，无拧动划痕</label>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step3-2" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                        <label for="step3-2" class="text-sm">排气管：冷车指摸无黑厚积碳</label>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step3-3" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                        <label for="step3-3" class="text-sm">灯光：远近光、转向、刹车灯正常</label>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step3-4" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                        <label for="step3-4" class="text-sm">功能：空调、音响、天窗正常</label>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="step3-5" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                        <label for="step3-5" class="text-sm">内饰：座椅无磨损，安全带正常</label>
+                    </div>
+                </div>
+            </div>
+            <textarea placeholder="功能测试备注..." class="mt-4 text-sm p-2 border rounded-md w-full"></textarea>
+        </section>
+
+        <!-- 四、随车文件 -->
+        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
+            <h3 class="font-bold text-lg border-b pb-2 mb-4">四、 随车证件与物品核对</h3>
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" id="doc-1" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                    <label for="doc-1" class="text-sm">发票原件 (三联)、合格证、一致性证书、环保清单</label>
+                </div>
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" id="doc-2" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                    <label for="doc-2" class="text-sm">三包凭证、保修手册、车主手册</label>
+                </div>
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" id="doc-3" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                    <label for="doc-3" class="text-sm">两把原厂钥匙、备胎/补胎工具、灭火器、三角架</label>
+                </div>
+                <div class="flex items-start gap-3">
+                    <input type="checkbox" id="doc-4" class="checkbox-custom h-5 w-5 rounded border-gray-300">
+                    <label for="doc-4" class="text-sm">确认赠品已按合同兑现 (脚垫、贴膜、行车记录仪等)</label>
+                </div>
+            </div>
+            <textarea placeholder="赠品及遗留问题记录..." class="mt-4 text-sm p-2 border rounded-md w-full"></textarea>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-400 text-xs py-10 border-t">
+            <p>确认无误后方可签字确认。祝您提车大吉，出入平安！</p>
+        </footer>
+    </main>
+
+    <div class="fixed bottom-4 right-4 no-print">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="bg-white shadow-lg border p-3 rounded-full hover:bg-gray-50">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+        </button>
+    </div>
+
+</body>
+</html>
