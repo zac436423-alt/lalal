@@ -3,72 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>燃油车提车验收清单 - 交互版</title>
+    <title>燃油车提车验收清单-2026</title>
     <style>
-        :root { --primary: #3498db; --bg: #f4f7f6; }
-        body { font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background: var(--bg); }
-        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1 { text-align: center; color: #2c3e50; }
-        h2 { color: var(--primary); border-left: 5px solid var(--primary); padding-left: 15px; margin-top: 30px; }
-        .controls { position: sticky; top: 10px; z-index: 100; text-align: right; margin-bottom: 20px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn:hover { opacity: 0.9; }
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; background: #fff; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
-        th { background: #f8f9fa; }
-        tr.checked { background-color: #e8f4fd; }
-        input[type="checkbox"] { transform: scale(1.5); cursor: pointer; }
-        input[type="text"] { width: 90%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        .tip { color: #e74c3c; font-weight: bold; text-align: center; margin: 20px 0; }
-        @media print { .controls, .no-print { display: none; } body { background: white; } .card { box-shadow: none; border: 1px solid #ccc; } }
+        body { font-family: system-ui, -apple-system, sans-serif; padding: 15px; background: #f4f4f7; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        h1 { font-size: 20px; text-align: center; color: #2c3e50; margin-bottom: 5px; }
+        .subtitle { text-align: center; font-size: 12px; color: #e74c3c; margin-bottom: 20px; font-weight: bold; }
+        .btn-download { display: block; width: 100%; padding: 12px; background: #3498db; color: #fff; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; cursor: pointer; text-align: center; }
+        .section-title { background: #f8f9fa; padding: 8px 12px; border-left: 4px solid #3498db; margin: 20px 0 10px; font-weight: bold; font-size: 16px; }
+        .item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
+        .item:last-child { border-bottom: none; }
+        .item.checked { background: #eef7fe; color: #3498db; }
+        .item input { width: 20px; height: 20px; margin-right: 15px; pointer-events: none; }
+        .label { flex: 1; font-size: 15px; }
+        @media print { .btn-download { display: none; } .container { box-shadow: none; border: 1px solid #eee; } }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-        <button class="btn" onclick="window.print()">保存/下载验收报告</button>
-    </div>
+<div class="container">
+    <button class="btn-download" onclick="window.print()">点击下载/保存为 PDF 报告</button>
+    <h1>燃油车新车验收清单</h1>
+    <div class="subtitle">原则：先验车 → 再付款 → 最后签收</div>
 
-    <h1>燃油车新车提车验收清单</h1>
-    <p class="tip">先验车 → 再付款 → 最后签收！</p>
+    <div class="section-title">1. 证件与编码</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">身份证、驾驶证、购车合同</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">VIN码核对：挡风、B柱、发动机舱三码合一</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">出厂日期 ≤6个月（进口≤1年）</span></div>
 
-    <div class="card">
-        <h2>1. 身份与编码核对（三码合一）</h2>
-        <table>
-            <thead><tr><th>检查项</th><th>状态</th><th>备注信息</th></tr></thead>
-            <tbody>
-                <tr><td>VIN码核对 (挡风、B柱、发动机舱)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="输入VIN码后6位"></td></tr>
-                <tr><td>出厂日期 (≤6个月)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="出厂日期："></td></tr>
-                <tr><td>轮胎生产日期 (如3525)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="输入DOT码"></td></tr>
-            </tbody>
-        </table>
-    </div>
+    <div class="section-title">2. 外观检测</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">漆面检测：无色差、划痕、补漆痕迹</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">玻璃与轮胎：日期早于整车出厂日期</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">底盘：无磕碰、无油液渗漏</span></div>
 
-    <div class="card">
-        <h2>2. 外观与机械检测</h2>
-        <table>
-            <thead><tr><th>检查项</th><th>状态</th><th>备注信息</th></tr></thead>
-            <tbody>
-                <tr><td>漆面检测 (45°观察、厚度测试)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="记录瑕疵点"></td></tr>
-                <tr><td>底盘检测 (无油液渗漏、无锈蚀)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="观察避震器"></td></tr>
-                <tr><td>冷启动检测 (3秒启动、无异响)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="怠速转速："></td></tr>
-                <tr><td>仪表里程 (建议≤20km)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="当前里程："></td></tr>
-            </tbody>
-        </table>
-    </div>
+    <div class="section-title">3. 机械与内饰</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">里程表：读数 ≤50km</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">发动机：冷启动稳定，无异响</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">功能检测：空调、灯光、天窗、音响全好</span></div>
 
-    <div class="card">
-        <h2>3. 交付文件清单</h2>
-        <table>
-            <tr><td><input type="checkbox"> 发票(三联)</td><td><input type="checkbox"> 合格证/一致性证书</td><td><input type="checkbox"> 三包凭证</td></tr>
-            <tr><td><input type="checkbox"> PDI检测报告</td><td><input type="checkbox"> 保险单据</td><td><input type="checkbox"> 车匙(2把)</td></tr>
-        </table>
-    </div>
+    <div class="section-title">4. 必备资料</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">机动车销售发票（三联）</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">合格证、一致性证书、环保清单</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">三包凭证、保养手册、PDI报告</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">钥匙(2把)、随车工具(灭火器/反光衣)</span></div>
+</div>
 
-    <footer style="text-align: center; color: #999; padding: 20px;">
-        生成时间：<span id="date"></span> | 维权电话：12315
-    </footer>
-
-    <script>document.getElementById('date').innerText = new Date().toLocaleString();</script>
+<script>
+    function toggleItem(el) {
+        const cb = el.querySelector('input');
+        cb.checked = !cb.checked;
+        el.classList.toggle('checked');
+    }
+</script>
 </body>
 </html>
