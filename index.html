@@ -3,189 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新车交付验车核对表 (2024-2025 精准版)</title>
+    <title>数字化验车清单工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Excel 处理核心库 -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; }
-            .card { border: 1px solid #e5e7eb !important; box-shadow: none !important; break-inside: avoid; }
-            textarea { border: none !important; resize: none !important; }
+            body { background: white !important; padding: 0 !important; }
+            .card { border: 1px solid #e5e7eb !important; box-shadow: none !important; break-inside: avoid; margin-bottom: 1.5rem; }
+            textarea { border: 1px solid #f3f4f6 !important; background: transparent !important; resize: none !important; }
+            .group-header { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; }
         }
-        .checkbox-custom:checked + label { text-decoration: line-through; color: #9ca3af; }
+
+        .custom-checkbox:checked + label {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+
+        .drop-zone {
+            border: 2px dashed #e2e8f0;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: scale(1.01);
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen pb-10">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
 
-    <!-- Header -->
-    <header class="bg-white border-b sticky top-0 z-10 no-print">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-blue-600">新车交付验车助手</h1>
-            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-                导出 PDF / 打印
-            </button>
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white border-b sticky top-0 z-30 no-print">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <span class="font-bold text-lg tracking-tight">验车助手 <span class="text-blue-500 font-medium text-sm ml-1">v2.0</span></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-md transition-all flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    导出报告
+                </button>
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <main class="max-w-4xl mx-auto px-4 mt-6">
-        <!-- Title and Warning -->
-        <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold mb-2">新车交付验车核对表 (2024-2025 精准版)</h2>
-            <p class="text-sm text-gray-500 italic">核心准则：先洗车、再验车、后付款。记录所有疑问于交车确认单。</p>
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        
+        <!-- 文件上传区域 -->
+        <section class="no-print mb-10">
+            <div id="dropZone" class="drop-zone bg-white rounded-2xl p-10 text-center cursor-pointer shadow-sm">
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    <div>
+                        <p class="text-xl font-bold text-slate-700">导入您的验车清单表格</p>
+                        <p class="text-slate-400 mt-1">支持 Excel 或 CSV 文件，系统将自动识别并同步内容</p>
+                    </div>
+                    <button onclick="document.getElementById('fileInput').click()" class="text-blue-600 font-semibold text-sm hover:text-blue-700 underline decoration-2 underline-offset-4">浏览电脑文件</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 动态清单内容渲染区 -->
+        <div id="checklistContent" class="space-y-8">
+            <!-- 默认缺省页 -->
+            <div id="emptyState" class="flex flex-col items-center justify-center py-24 text-slate-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-4"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                <p class="text-lg font-medium">等待清单上传...</p>
+                <p class="text-sm mt-1">请上传包含“类别、检查项目、注意事项”的表格文件</p>
+            </div>
         </div>
 
-        <!-- 拒收标准 -->
-        <section class="mb-8 bg-red-50 border border-red-200 rounded-xl p-5 card">
-            <h3 class="text-red-700 font-bold text-lg mb-3 flex items-center gap-2">
-                ⚠️ 拒收标准 (一票否决项)
-            </h3>
-            <div class="space-y-4">
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="reject-1" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
-                        <label for="reject-1" class="font-medium text-red-900">里程：仪表盘里程 > 50km (超过 100km 建议拒收)</label>
-                    </div>
-                    <textarea placeholder="添加备注..." class="ml-8 text-sm p-2 border rounded-md w-full bg-white/50 focus:bg-white transition"></textarea>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="reject-2" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
-                        <label for="reject-2" class="font-medium text-red-900">库存：国产车 > 6个月，进口车 > 12个月</label>
-                    </div>
-                    <textarea placeholder="添加备注..." class="ml-8 text-sm p-2 border rounded-md w-full bg-white/50 focus:bg-white transition"></textarea>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="reject-3" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
-                        <label for="reject-3" class="font-medium text-red-900">日期：玻璃、轮胎、电瓶晚于整车出厂日期</label>
-                    </div>
-                    <textarea placeholder="添加备注..." class="ml-8 text-sm p-2 border rounded-md w-full bg-white/50 focus:bg-white transition"></textarea>
-                </div>
-            </div>
-        </section>
-
-        <!-- 一、身份与年份 -->
-        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
-            <h3 class="font-bold text-lg border-b pb-2 mb-4">一、 车辆身份与年份核验</h3>
-            <div class="overflow-x-auto mb-4">
-                <table class="w-full text-sm text-center border">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="border p-2">VIN代码</th><th class="border p-2">年份</th>
-                            <th class="border p-2">VIN代码</th><th class="border p-2">年份</th>
-                            <th class="border p-2">VIN代码</th><th class="border p-2">年份</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td class="border p-2 font-bold">L</td><td class="border p-2">2020</td><td class="border p-2 font-bold">M</td><td class="border p-2">2021</td><td class="border p-2 font-bold">N</td><td class="border p-2">2022</td></tr>
-                        <tr><td class="border p-2 font-bold">P</td><td class="border p-2">2023</td><td class="border p-2 font-bold">R</td><td class="border p-2">2024</td><td class="border p-2 font-bold">S</td><td class="border p-2">2025</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="space-y-4">
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step1-1" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-blue-600">
-                        <label for="step1-1" class="font-medium">核对三处 VIN 码一致（B柱铭牌、挡风玻璃、发动机舱）</label>
-                    </div>
-                    <textarea placeholder="VIN码记录..." class="ml-8 text-sm p-2 border rounded-md w-full"></textarea>
-                </div>
-            </div>
-        </section>
-
-        <!-- 二、玻璃与轮胎 -->
-        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
-            <h3 class="font-bold text-lg border-b pb-2 mb-4">二、 玻璃与轮胎日期 (公式核算)</h3>
-            <div class="bg-blue-50 p-4 rounded-lg mb-4 text-sm text-blue-800">
-                <p><strong>玻璃公式：</strong> 数字(年) + 点(月)。左点(7-点数)，右点(13-点数)。</p>
-                <p><strong>轮胎公式：</strong> 4位数字 (周周年年)。如 1524 即 24年第15周。</p>
-            </div>
-            <div class="space-y-4">
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step2-1" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-blue-600">
-                        <label for="step2-1" class="font-medium">玻璃生产日期早于整车（全车 6-8 块玻璃）</label>
-                    </div>
-                    <textarea placeholder="各处玻璃日期备注..." class="ml-8 text-sm p-2 border rounded-md w-full"></textarea>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step2-2" class="checkbox-custom mt-1 h-5 w-5 rounded border-gray-300 text-blue-600">
-                        <label for="step2-2" class="font-medium">轮胎生产日期早于整车，且四条日期相近</label>
-                    </div>
-                    <textarea placeholder="轮胎 DOT 码备注..." class="ml-8 text-sm p-2 border rounded-md w-full"></textarea>
-                </div>
-            </div>
-        </section>
-
-        <!-- 三、机械与功能 -->
-        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
-            <h3 class="font-bold text-lg border-b pb-2 mb-4">三、 机械、内饰与电器测试</h3>
-            <div class="grid md:grid-cols-2 gap-4">
-                <div class="space-y-3">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step3-1" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                        <label for="step3-1" class="text-sm">发动机舱：机油清亮，无拧动划痕</label>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step3-2" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                        <label for="step3-2" class="text-sm">排气管：冷车指摸无黑厚积碳</label>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step3-3" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                        <label for="step3-3" class="text-sm">灯光：远近光、转向、刹车灯正常</label>
-                    </div>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step3-4" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                        <label for="step3-4" class="text-sm">功能：空调、音响、天窗正常</label>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" id="step3-5" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                        <label for="step3-5" class="text-sm">内饰：座椅无磨损，安全带正常</label>
-                    </div>
-                </div>
-            </div>
-            <textarea placeholder="功能测试备注..." class="mt-4 text-sm p-2 border rounded-md w-full"></textarea>
-        </section>
-
-        <!-- 四、随车文件 -->
-        <section class="mb-8 bg-white border rounded-xl shadow-sm p-5 card">
-            <h3 class="font-bold text-lg border-b pb-2 mb-4">四、 随车证件与物品核对</h3>
-            <div class="space-y-3">
-                <div class="flex items-start gap-3">
-                    <input type="checkbox" id="doc-1" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                    <label for="doc-1" class="text-sm">发票原件 (三联)、合格证、一致性证书、环保清单</label>
-                </div>
-                <div class="flex items-start gap-3">
-                    <input type="checkbox" id="doc-2" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                    <label for="doc-2" class="text-sm">三包凭证、保修手册、车主手册</label>
-                </div>
-                <div class="flex items-start gap-3">
-                    <input type="checkbox" id="doc-3" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                    <label for="doc-3" class="text-sm">两把原厂钥匙、备胎/补胎工具、灭火器、三角架</label>
-                </div>
-                <div class="flex items-start gap-3">
-                    <input type="checkbox" id="doc-4" class="checkbox-custom h-5 w-5 rounded border-gray-300">
-                    <label for="doc-4" class="text-sm">确认赠品已按合同兑现 (脚垫、贴膜、行车记录仪等)</label>
-                </div>
-            </div>
-            <textarea placeholder="赠品及遗留问题记录..." class="mt-4 text-sm p-2 border rounded-md w-full"></textarea>
-        </section>
-
-        <!-- Footer -->
-        <footer class="text-center text-gray-400 text-xs py-10 border-t">
-            <p>确认无误后方可签字确认。祝您提车大吉，出入平安！</p>
+        <footer class="mt-20 border-t pt-8 pb-12 text-center">
+            <p class="text-slate-400 text-sm">© 2026 提车数字化助手 · 专业验车凭证生成工具</p>
         </footer>
     </main>
 
-    <div class="fixed bottom-4 right-4 no-print">
-        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="bg-white shadow-lg border p-3 rounded-full hover:bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-        </button>
-    </div>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const contentArea = document.getElementById('checklistContent');
 
+        // 拖拽手势增强
+        ['dragenter', 'dragover'].forEach(eName => {
+            dropZone.addEventListener(eName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eName => {
+            dropZone.addEventListener(eName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file) processExcel(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processExcel(file);
+        });
+
+        function processExcel(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                if (jsonData.length > 0) {
+                    renderUI(jsonData);
+                } else {
+                    alert('表格似乎是空的，请检查文件内容。');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderUI(data) {
+            contentArea.innerHTML = ''; // 清空内容
+
+            // 数据分组逻辑 (支持中文/英文表头)
+            const grouped = data.reduce((acc, row) => {
+                const cat = row['类别'] || row['Category'] || '其他项';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(row);
+                return acc;
+            }, {});
+
+            Object.keys(grouped).forEach((cat, gIndex) => {
+                const section = document.createElement('div');
+                section.className = 'bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden card';
+                
+                let rowsHtml = grouped[cat].map((item, iIndex) => {
+                    const title = item['检查项目'] || item['Item'] || '未定义项目';
+                    const desc = item['注意事项'] || item['Details'] || '';
+                    const id = `check-${gIndex}-${iIndex}`;
+                    
+                    return `
+                        <div class="group p-5 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                            <div class="flex items-start gap-4">
+                                <div class="relative flex items-center h-6 mt-1">
+                                    <input type="checkbox" id="${id}" class="custom-checkbox w-6 h-6 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition">
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <label for="${id}" class="block font-bold text-slate-800 text-base cursor-pointer group-hover:text-blue-700 transition-colors">${title}</label>
+                                    ${desc ? `<p class="text-sm text-slate-500 mt-1 leading-relaxed">${desc}</p>` : ''}
+                                    <textarea placeholder="点击记录现场情况（如：发现细微划痕、某功能异常等）" 
+                                              class="mt-4 w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-300"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                section.innerHTML = `
+                    <div class="group-header bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                        <h2 class="font-bold text-slate-600 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                            ${cat}
+                        </h2>
+                        <span class="text-xs font-semibold text-slate-400 bg-white border px-2.5 py-1 rounded-full shadow-sm">${grouped[cat].length} 项任务</span>
+                    </div>
+                    <div class="divide-y divide-slate-50">${rowsHtml}</div>
+                `;
+                contentArea.appendChild(section);
+            });
+        }
+    </script>
 </body>
 </html>
