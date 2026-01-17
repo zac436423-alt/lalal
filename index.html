@@ -1,274 +1,318 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数字化验车清单工具</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Excel 处理核心库 -->
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { 
+  CheckCircle2, 
+  Circle, 
+  ClipboardCheck, 
+  Info, 
+  Trash2,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  AlertCircle,
+  Loader2,
+  Check
+} from 'lucide-react';
 
+// 初始内置数据
+const INITIAL_DATA = [
+  { category: "重中之重", item: "表显里程检查", details: "核对里程不超过 20km。若超过 50km 可能是试驾车，建议拒收。" },
+  { category: "重中之重", item: "车架号 (VIN) 核对", details: "核对铭牌、玻璃、合格证三码合一。第 10 位：P 代表 23 年，R 代表 24 年。" },
+  { category: "重中之重", item: "出厂时间", details: "检查制造年月，国产车超过 3 个月、进口车超过 6 个月需警惕库存车。" },
+  { category: "外部检查", item: "全车漆面", details: "建议洗车后在光线下检查。查看是否有划痕、色差、流挂或二次补漆痕迹。" },
+  { category: "外部检查", item: "玻璃生产日期", details: "数字+黑点。点在左（7-点数），点在右（13-点数）。日期必须早于整车。" },
+  { category: "外部检查", item: "轮胎生产日期", details: "胎侧 4 位数（如 1524 为 24 年 15 周）。检查胎毛是否完好，四条轮胎日期应接近。" }
+];
+
+export default function App() {
+  const [tasks, setTasks] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("全部");
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [libLoaded, setLibLoaded] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // 1. 动态加载 SheetJS 库 (解决移动端兼容性)
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
+    script.async = true;
+    script.onload = () => setLibLoaded(true);
+    document.head.appendChild(script);
+
+    // 加载本地数据
+    const saved = localStorage.getItem('inspection_tasks_pro');
+    if (saved) {
+      setTasks(JSON.parse(saved));
+    } else {
+      setTasks(INITIAL_DATA.map((t, idx) => ({ ...t, id: `init-${idx}`, checked: false, note: "" })));
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // 2. 自动保存
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem('inspection_tasks_pro', JSON.stringify(tasks));
+    }
+  }, [tasks, isInitialized]);
+
+  const categories = ["全部", ...new Set(tasks.map(t => t.category))];
+  const filteredTasks = tasks.filter(t => activeCategory === "全部" || t.category === activeCategory);
+
+  const stats = useMemo(() => {
+    const completed = tasks.filter(t => t.checked).length;
+    return {
+      total: tasks.length,
+      completed,
+      percent: tasks.length ? Math.round((completed / tasks.length) * 100) : 0
+    };
+  }, [tasks]);
+
+  // 3. 处理文件导入 (专门优化移动端)
+  const handleFileImport = (e) => {
+    const file = e.target.files[0];
+    if (!file || !window.XLSX) return;
+
+    setIsLoading(true);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = window.XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = window.XLSX.utils.sheet_to_json(sheet);
+
+        if (json.length === 0) throw new Error("文件内容为空");
+
+        // 智能映射表头
+        const newTasks = json.map((row, idx) => {
+          const category = row['类别'] || row['Category'] || row['分组'] || "外部导入";
+          const item = row['检查项目'] || row['Item'] || row['项目'] || row['名称'] || "未知项目";
+          const details = row['注意事项'] || row['Details'] || row['细节'] || row['要求'] || "";
+          
+          return {
+            id: `import-${Date.now()}-${idx}`,
+            category,
+            item,
+            details,
+            checked: false,
+            note: ""
+          };
+        });
+
+        if (window.confirm(`成功识别出 ${newTasks.length} 项检查任务，是否覆盖当前清单？`)) {
+          setTasks(newTasks);
+          setActiveCategory("全部");
+        }
+      } catch (err) {
+        alert("文件解析失败，请确保使用标准的 Excel 格式。提示：" + err.message);
+      } finally {
+        setIsLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = ""; // 重置 input
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const toggleTask = (id) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, checked: !t.checked } : t));
+  };
+
+  const updateNote = (id, note) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, note } : t));
+  };
+
+  const resetAll = () => {
+    if (window.confirm("确定要彻底清空并重置为初始清单吗？")) {
+      setTasks(INITIAL_DATA.map((t, idx) => ({ ...t, id: `reset-${idx}`, checked: false, note: "" })));
+      localStorage.removeItem('inspection_tasks_pro');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-32">
+      {/* 头部导航 */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div className="max-w-md mx-auto px-4 py-3">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-100">
+                <ClipboardCheck size={20} />
+              </div>
+              <div>
+                <h1 className="font-bold text-lg tracking-tight">数字化验车助手</h1>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Digital Inspection Pro</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 text-blue-600 bg-blue-50 rounded-lg active:scale-90 transition-transform"
+                title="导入Excel"
+              >
+                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <FileSpreadsheet size={18} />}
+              </button>
+              <button 
+                onClick={resetAll}
+                className="p-2 text-slate-300 hover:text-red-500 active:scale-90 transition-transform"
+                title="重置"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* 进度条 */}
+          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-xs font-bold text-slate-500 uppercase">进度</span>
+              <span className="text-sm font-black text-blue-600">{stats.completed}<span className="text-slate-300 font-normal mx-1">/</span>{stats.total}</span>
+            </div>
+            <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-600 transition-all duration-700 ease-out shadow-[0_0_8px_rgba(37,99,235,0.4)]" 
+                style={{ width: `${stats.percent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 分类切换 */}
+        <div className="max-w-md mx-auto px-4 mt-2 overflow-x-auto no-scrollbar flex gap-2 pb-3">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
+                activeCategory === cat 
+                ? "bg-slate-900 text-white shadow-md shadow-slate-200" 
+                : "bg-white text-slate-400 border border-slate-100"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* 隐藏的文件输入框 */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileImport} 
+        accept=".xlsx, .xls, .csv" 
+        className="hidden" 
+      />
+
+      {/* 主清单列表 */}
+      <main className="max-w-md mx-auto px-4 py-6 space-y-4">
+        {/* 移动端导入提示 */}
+        {!tasks.some(t => t.id.includes('import')) && (
+          <div className="bg-blue-600 rounded-2xl p-4 text-white shadow-xl shadow-blue-100 flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <Upload size={20} />
+              </div>
+              <div className="pr-4">
+                <p className="font-bold text-sm">导入你的专属 Excel？</p>
+                <p className="text-[10px] opacity-80">点击右上角图标选择文件</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-transform"
+            >
+              立即上传
+            </button>
+          </div>
+        )}
+
+        {filteredTasks.length > 0 ? (
+          filteredTasks.map(task => (
+            <div 
+              key={task.id} 
+              className={`bg-white rounded-3xl border transition-all duration-300 overflow-hidden ${
+                task.checked ? "border-emerald-100 shadow-none" : "border-slate-100 shadow-sm"
+              }`}
+            >
+              <div className="p-5">
+                <div className="flex items-start gap-4">
+                  <button 
+                    onClick={() => toggleTask(task.id)}
+                    className={`mt-1 flex-shrink-0 transition-all active:scale-75 ${
+                      task.checked ? "text-emerald-500 scale-110" : "text-slate-200"
+                    }`}
+                  >
+                    {task.checked ? <CheckCircle2 size={28} /> : <Circle size={28} />}
+                  </button>
+                  
+                  <div className="flex-1 space-y-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className={`font-bold text-base leading-tight transition-all ${
+                        task.checked ? "text-slate-300 line-through" : "text-slate-800"
+                      }`}>
+                        {task.item}
+                      </h3>
+                      <span className="text-[9px] font-black px-2 py-0.5 bg-slate-50 text-slate-400 rounded-lg border border-slate-100 flex-shrink-0 uppercase">
+                        {task.category}
+                      </span>
+                    </div>
+                    <p className={`text-xs leading-relaxed transition-colors ${
+                       task.checked ? "text-slate-200" : "text-slate-500"
+                    }`}>
+                      {task.details}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 备注区 */}
+                <div className={`mt-4 pt-4 border-t transition-all ${
+                  task.checked ? "border-emerald-50/50" : "border-slate-50"
+                }`}>
+                  <textarea
+                    value={task.note}
+                    onChange={(e) => updateNote(task.id, e.target.value)}
+                    placeholder="现场记录（发现瑕疵、异响等...）"
+                    className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all resize-none min-h-[80px] outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-24 text-slate-200">
+            <AlertCircle size={64} className="mx-auto mb-4 opacity-10" />
+            <p className="font-bold">暂无该分类项目</p>
+          </div>
+        )}
+      </main>
+
+      {/* 底部悬浮操作栏 */}
+      <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none">
+        <div className="bg-slate-900 shadow-2xl rounded-2xl p-2 flex items-center gap-2 pointer-events-auto border border-white/10 ring-4 ring-slate-900/5">
+          <button 
+            onClick={() => window.print()}
+            className="flex items-center gap-3 text-white px-8 py-3 font-bold text-sm bg-blue-600 rounded-xl hover:bg-blue-500 active:scale-95 transition-all shadow-lg shadow-blue-500/30"
+          >
+            <Download size={18} />
+            生成报告 (PDF)
+          </button>
+        </div>
+      </div>
+
+      <style>{`
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; padding: 0 !important; }
-            .card { border: 1px solid #e5e7eb !important; box-shadow: none !important; break-inside: avoid; margin-bottom: 1.5rem; }
-            textarea { border: 1px solid #f3f4f6 !important; background: transparent !important; resize: none !important; }
-            .group-header { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; }
+          .no-print, header, .fixed, button, .bg-blue-600.rounded-2xl { display: none !important; }
+          body { background: white !important; }
+          main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+          .rounded-3xl { border-radius: 12px !important; border: none !important; border-bottom: 1px solid #eee !important; margin-bottom: 10px !important; box-shadow: none !important; }
+          textarea { background: transparent !important; border: 1px solid #f0f0f0 !important; height: auto !important; min-height: 40px !important; }
+          .text-slate-300 { color: #ccc !important; text-decoration: none !important; }
         }
-
-        .custom-checkbox:checked + label {
-            text-decoration: line-through;
-            color: #9ca3af;
-        }
-
-        .drop-zone {
-            border: 2px dashed #e2e8f0;
-            transition: all 0.2s ease;
-        }
-
-        .drop-zone.dragover {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-            transform: scale(1.01);
-        }
-
-        /* 消息提示框样式 */
-        #notification {
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            transform: translateY(100px);
-            opacity: 0;
-        }
-        #notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-
-    <!-- 顶部导航栏 -->
-    <nav class="bg-white border-b sticky top-0 z-30 no-print">
-        <div class="max-w-4xl mx-auto px-4 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                </div>
-                <span class="font-bold text-lg tracking-tight">验车助手 <span class="text-blue-500 font-medium text-sm ml-1">v2.1</span></span>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-semibold shadow-md transition-all flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                    导出报告
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-4xl mx-auto px-4 py-8">
-        
-        <!-- 文件上传区域 -->
-        <section class="no-print mb-10">
-            <div id="dropZone" class="drop-zone bg-white rounded-2xl p-10 text-center cursor-pointer shadow-sm relative overflow-hidden">
-                <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
-                
-                <div id="uploadUI">
-                    <div class="flex flex-col items-center gap-4">
-                        <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        </div>
-                        <div>
-                            <p class="text-xl font-bold text-slate-700">导入您的验车清单表格</p>
-                            <p class="text-slate-400 mt-1">支持 Excel 或 CSV 文件，系统将智能识别内容</p>
-                        </div>
-                        <div class="flex gap-4 mt-2">
-                            <button onclick="document.getElementById('fileInput').click()" class="text-blue-600 font-semibold text-sm hover:text-blue-700 underline decoration-2 underline-offset-4">浏览文件</button>
-                            <span class="text-slate-300">|</span>
-                            <button onclick="loadDemoData()" class="text-slate-500 font-semibold text-sm hover:text-slate-700 underline decoration-2 underline-offset-4">加载演示数据</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 加载中状态 -->
-                <div id="loadingUI" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center">
-                    <div class="flex flex-col items-center gap-2">
-                        <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p class="text-sm font-bold text-blue-600">正在解析文件...</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 动态清单内容渲染区 -->
-        <div id="checklistContent" class="space-y-8">
-            <!-- 默认缺省页 -->
-            <div id="emptyState" class="flex flex-col items-center justify-center py-24 text-slate-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-4"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
-                <p class="text-lg font-medium">尚未加载清单内容</p>
-                <p class="text-sm mt-1">上传 Excel 或点击“加载演示数据”开始</p>
-            </div>
-        </div>
-
-        <footer class="mt-20 border-t pt-8 pb-12 text-center">
-            <p class="text-slate-400 text-sm">© 2026 提车数字化助手 · 专业验车凭证生成工具</p>
-        </footer>
-    </main>
-
-    <!-- 消息提示 -->
-    <div id="notification" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-slate-800 text-white rounded-full shadow-2xl flex items-center gap-3 no-print">
-        <span id="notifyIcon"></span>
-        <span id="notifyText" class="text-sm font-medium"></span>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
-
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const dropZone = document.getElementById('dropZone');
-        const contentArea = document.getElementById('checklistContent');
-        const loadingUI = document.getElementById('loadingUI');
-        const notification = document.getElementById('notification');
-        const notifyText = document.getElementById('notifyText');
-
-        function showNotify(text, type = 'info') {
-            notifyText.innerText = text;
-            notification.classList.add('show');
-            setTimeout(() => notification.classList.remove('show'), 3000);
-        }
-
-        // 拖拽手势
-        ['dragenter', 'dragover'].forEach(eName => {
-            dropZone.addEventListener(eName, (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-        });
-
-        ['dragleave', 'drop'].forEach(eName => {
-            dropZone.addEventListener(eName, (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-            });
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            const file = e.dataTransfer.files[0];
-            if (file) processExcel(file);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) processExcel(file);
-        });
-
-        function processExcel(file) {
-            loadingUI.classList.remove('hidden');
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                    
-                    if (jsonData.length > 0) {
-                        renderUI(jsonData);
-                        showNotify('清单同步成功！', 'success');
-                    } else {
-                        showNotify('表格似乎是空的。', 'error');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showNotify('解析失败，请确保文件格式正确。', 'error');
-                } finally {
-                    loadingUI.classList.add('hidden');
-                }
-            };
-
-            reader.onerror = () => {
-                showNotify('文件读取出错。', 'error');
-                loadingUI.classList.add('hidden');
-            };
-
-            reader.readAsArrayBuffer(file);
-        }
-
-        function loadDemoData() {
-            const demo = [
-                { "类别": "重中之重", "检查项目": "表显里程", "注意事项": "核对里程不超过20km，超过50km建议拒收。" },
-                { "类别": "重中之重", "检查项目": "VIN码核对", "注意事项": "核对铭牌、玻璃、合格证三码合一，检查第10位年份（P=23年, R=24年）。" },
-                { "类别": "外部检查", "检查项目": "漆面观察", "注意事项": "室外光线下观察是否有色差、划痕或补漆痕迹。" },
-                { "类别": "外部检查", "检查项目": "玻璃生产日期", "注意事项": "检查全车玻璃，日期必须早于整车出厂日期。" },
-                { "类别": "随车物品", "检查项目": "钥匙数量", "注意事项": "确认有两把原厂智能钥匙。" }
-            ];
-            renderUI(demo);
-            showNotify('演示数据已加载。');
-        }
-
-        function renderUI(data) {
-            contentArea.innerHTML = ''; // 清空内容
-
-            // 智能识别表头
-            const getVal = (row, keys) => {
-                for(let k of keys) {
-                    if(row[k] !== undefined) return row[k];
-                }
-                return null;
-            };
-
-            const catKeys = ['类别', 'Category', '分组', 'Group'];
-            const titleKeys = ['检查项目', '项目', 'Item', '任务', 'Title'];
-            const descKeys = ['注意事项', '备注', '详情', '描述', 'Details', 'Note'];
-
-            // 数据分组逻辑
-            const grouped = data.reduce((acc, row) => {
-                const cat = getVal(row, catKeys) || '其他项目';
-                if (!acc[cat]) acc[cat] = [];
-                acc[cat].push(row);
-                return acc;
-            }, {});
-
-            Object.keys(grouped).forEach((cat, gIndex) => {
-                const section = document.createElement('div');
-                section.className = 'bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden card';
-                
-                let rowsHtml = grouped[cat].map((item, iIndex) => {
-                    const title = getVal(item, titleKeys) || '未命名任务';
-                    const desc = getVal(item, descKeys) || '';
-                    const id = `check-${gIndex}-${iIndex}`;
-                    
-                    return `
-                        <div class="group p-5 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                            <div class="flex items-start gap-4">
-                                <div class="relative flex items-center h-6 mt-1">
-                                    <input type="checkbox" id="${id}" class="custom-checkbox w-6 h-6 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition">
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <label for="${id}" class="block font-bold text-slate-800 text-base cursor-pointer group-hover:text-blue-700 transition-colors">${title}</label>
-                                    ${desc ? `<p class="text-sm text-slate-500 mt-1 leading-relaxed">${desc}</p>` : ''}
-                                    <textarea placeholder="输入现场记录..." 
-                                              class="mt-4 w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-600 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-300"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                section.innerHTML = `
-                    <div class="group-header bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                        <h2 class="font-bold text-slate-600 flex items-center gap-2">
-                            <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                            ${cat}
-                        </h2>
-                        <span class="text-xs font-semibold text-slate-400 bg-white border px-2.5 py-1 rounded-full shadow-sm">${grouped[cat].length} 项任务</span>
-                    </div>
-                    <div class="divide-y divide-slate-50">${rowsHtml}</div>
-                `;
-                contentArea.appendChild(section);
-            });
-        }
-    </script>
-</body>
-</html>
+  );
+}
