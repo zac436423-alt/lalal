@@ -1,318 +1,74 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-  CheckCircle2, 
-  Circle, 
-  ClipboardCheck, 
-  Info, 
-  Trash2,
-  Download,
-  Upload,
-  FileSpreadsheet,
-  AlertCircle,
-  Loader2,
-  Check
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>燃油车提车验收清单 - 交互版</title>
+    <style>
+        :root { --primary: #3498db; --bg: #f4f7f6; }
+        body { font-family: "Microsoft YaHei", sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background: var(--bg); }
+        .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { text-align: center; color: #2c3e50; }
+        h2 { color: var(--primary); border-left: 5px solid var(--primary); padding-left: 15px; margin-top: 30px; }
+        .controls { position: sticky; top: 10px; z-index: 100; text-align: right; margin-bottom: 20px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; background: #fff; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background: #f8f9fa; }
+        tr.checked { background-color: #e8f4fd; }
+        input[type="checkbox"] { transform: scale(1.5); cursor: pointer; }
+        input[type="text"] { width: 90%; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .tip { color: #e74c3c; font-weight: bold; text-align: center; margin: 20px 0; }
+        @media print { .controls, .no-print { display: none; } body { background: white; } .card { box-shadow: none; border: 1px solid #ccc; } }
+    </style>
+</head>
+<body>
 
-// 初始内置数据
-const INITIAL_DATA = [
-  { category: "重中之重", item: "表显里程检查", details: "核对里程不超过 20km。若超过 50km 可能是试驾车，建议拒收。" },
-  { category: "重中之重", item: "车架号 (VIN) 核对", details: "核对铭牌、玻璃、合格证三码合一。第 10 位：P 代表 23 年，R 代表 24 年。" },
-  { category: "重中之重", item: "出厂时间", details: "检查制造年月，国产车超过 3 个月、进口车超过 6 个月需警惕库存车。" },
-  { category: "外部检查", item: "全车漆面", details: "建议洗车后在光线下检查。查看是否有划痕、色差、流挂或二次补漆痕迹。" },
-  { category: "外部检查", item: "玻璃生产日期", details: "数字+黑点。点在左（7-点数），点在右（13-点数）。日期必须早于整车。" },
-  { category: "外部检查", item: "轮胎生产日期", details: "胎侧 4 位数（如 1524 为 24 年 15 周）。检查胎毛是否完好，四条轮胎日期应接近。" }
-];
-
-export default function App() {
-  const [tasks, setTasks] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("全部");
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [libLoaded, setLibLoaded] = useState(false);
-  const fileInputRef = useRef(null);
-
-  // 1. 动态加载 SheetJS 库 (解决移动端兼容性)
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js";
-    script.async = true;
-    script.onload = () => setLibLoaded(true);
-    document.head.appendChild(script);
-
-    // 加载本地数据
-    const saved = localStorage.getItem('inspection_tasks_pro');
-    if (saved) {
-      setTasks(JSON.parse(saved));
-    } else {
-      setTasks(INITIAL_DATA.map((t, idx) => ({ ...t, id: `init-${idx}`, checked: false, note: "" })));
-    }
-    setIsInitialized(true);
-  }, []);
-
-  // 2. 自动保存
-  useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem('inspection_tasks_pro', JSON.stringify(tasks));
-    }
-  }, [tasks, isInitialized]);
-
-  const categories = ["全部", ...new Set(tasks.map(t => t.category))];
-  const filteredTasks = tasks.filter(t => activeCategory === "全部" || t.category === activeCategory);
-
-  const stats = useMemo(() => {
-    const completed = tasks.filter(t => t.checked).length;
-    return {
-      total: tasks.length,
-      completed,
-      percent: tasks.length ? Math.round((completed / tasks.length) * 100) : 0
-    };
-  }, [tasks]);
-
-  // 3. 处理文件导入 (专门优化移动端)
-  const handleFileImport = (e) => {
-    const file = e.target.files[0];
-    if (!file || !window.XLSX) return;
-
-    setIsLoading(true);
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = window.XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = window.XLSX.utils.sheet_to_json(sheet);
-
-        if (json.length === 0) throw new Error("文件内容为空");
-
-        // 智能映射表头
-        const newTasks = json.map((row, idx) => {
-          const category = row['类别'] || row['Category'] || row['分组'] || "外部导入";
-          const item = row['检查项目'] || row['Item'] || row['项目'] || row['名称'] || "未知项目";
-          const details = row['注意事项'] || row['Details'] || row['细节'] || row['要求'] || "";
-          
-          return {
-            id: `import-${Date.now()}-${idx}`,
-            category,
-            item,
-            details,
-            checked: false,
-            note: ""
-          };
-        });
-
-        if (window.confirm(`成功识别出 ${newTasks.length} 项检查任务，是否覆盖当前清单？`)) {
-          setTasks(newTasks);
-          setActiveCategory("全部");
-        }
-      } catch (err) {
-        alert("文件解析失败，请确保使用标准的 Excel 格式。提示：" + err.message);
-      } finally {
-        setIsLoading(false);
-        if (fileInputRef.current) fileInputRef.current.value = ""; // 重置 input
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const toggleTask = (id) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, checked: !t.checked } : t));
-  };
-
-  const updateNote = (id, note) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, note } : t));
-  };
-
-  const resetAll = () => {
-    if (window.confirm("确定要彻底清空并重置为初始清单吗？")) {
-      setTasks(INITIAL_DATA.map((t, idx) => ({ ...t, id: `reset-${idx}`, checked: false, note: "" })));
-      localStorage.removeItem('inspection_tasks_pro');
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-32">
-      {/* 头部导航 */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="max-w-md mx-auto px-4 py-3">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-100">
-                <ClipboardCheck size={20} />
-              </div>
-              <div>
-                <h1 className="font-bold text-lg tracking-tight">数字化验车助手</h1>
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Digital Inspection Pro</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2 text-blue-600 bg-blue-50 rounded-lg active:scale-90 transition-transform"
-                title="导入Excel"
-              >
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <FileSpreadsheet size={18} />}
-              </button>
-              <button 
-                onClick={resetAll}
-                className="p-2 text-slate-300 hover:text-red-500 active:scale-90 transition-transform"
-                title="重置"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          </div>
-
-          {/* 进度条 */}
-          <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-            <div className="flex justify-between items-end mb-2">
-              <span className="text-xs font-bold text-slate-500 uppercase">进度</span>
-              <span className="text-sm font-black text-blue-600">{stats.completed}<span className="text-slate-300 font-normal mx-1">/</span>{stats.total}</span>
-            </div>
-            <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-600 transition-all duration-700 ease-out shadow-[0_0_8px_rgba(37,99,235,0.4)]" 
-                style={{ width: `${stats.percent}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 分类切换 */}
-        <div className="max-w-md mx-auto px-4 mt-2 overflow-x-auto no-scrollbar flex gap-2 pb-3">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all active:scale-95 ${
-                activeCategory === cat 
-                ? "bg-slate-900 text-white shadow-md shadow-slate-200" 
-                : "bg-white text-slate-400 border border-slate-100"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      {/* 隐藏的文件输入框 */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileImport} 
-        accept=".xlsx, .xls, .csv" 
-        className="hidden" 
-      />
-
-      {/* 主清单列表 */}
-      <main className="max-w-md mx-auto px-4 py-6 space-y-4">
-        {/* 移动端导入提示 */}
-        {!tasks.some(t => t.id.includes('import')) && (
-          <div className="bg-blue-600 rounded-2xl p-4 text-white shadow-xl shadow-blue-100 flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-lg">
-                <Upload size={20} />
-              </div>
-              <div className="pr-4">
-                <p className="font-bold text-sm">导入你的专属 Excel？</p>
-                <p className="text-[10px] opacity-80">点击右上角图标选择文件</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-transform"
-            >
-              立即上传
-            </button>
-          </div>
-        )}
-
-        {filteredTasks.length > 0 ? (
-          filteredTasks.map(task => (
-            <div 
-              key={task.id} 
-              className={`bg-white rounded-3xl border transition-all duration-300 overflow-hidden ${
-                task.checked ? "border-emerald-100 shadow-none" : "border-slate-100 shadow-sm"
-              }`}
-            >
-              <div className="p-5">
-                <div className="flex items-start gap-4">
-                  <button 
-                    onClick={() => toggleTask(task.id)}
-                    className={`mt-1 flex-shrink-0 transition-all active:scale-75 ${
-                      task.checked ? "text-emerald-500 scale-110" : "text-slate-200"
-                    }`}
-                  >
-                    {task.checked ? <CheckCircle2 size={28} /> : <Circle size={28} />}
-                  </button>
-                  
-                  <div className="flex-1 space-y-2">
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className={`font-bold text-base leading-tight transition-all ${
-                        task.checked ? "text-slate-300 line-through" : "text-slate-800"
-                      }`}>
-                        {task.item}
-                      </h3>
-                      <span className="text-[9px] font-black px-2 py-0.5 bg-slate-50 text-slate-400 rounded-lg border border-slate-100 flex-shrink-0 uppercase">
-                        {task.category}
-                      </span>
-                    </div>
-                    <p className={`text-xs leading-relaxed transition-colors ${
-                       task.checked ? "text-slate-200" : "text-slate-500"
-                    }`}>
-                      {task.details}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 备注区 */}
-                <div className={`mt-4 pt-4 border-t transition-all ${
-                  task.checked ? "border-emerald-50/50" : "border-slate-50"
-                }`}>
-                  <textarea
-                    value={task.note}
-                    onChange={(e) => updateNote(task.id, e.target.value)}
-                    placeholder="现场记录（发现瑕疵、异响等...）"
-                    className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs text-slate-600 focus:ring-2 focus:ring-blue-100 transition-all resize-none min-h-[80px] outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-24 text-slate-200">
-            <AlertCircle size={64} className="mx-auto mb-4 opacity-10" />
-            <p className="font-bold">暂无该分类项目</p>
-          </div>
-        )}
-      </main>
-
-      {/* 底部悬浮操作栏 */}
-      <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none">
-        <div className="bg-slate-900 shadow-2xl rounded-2xl p-2 flex items-center gap-2 pointer-events-auto border border-white/10 ring-4 ring-slate-900/5">
-          <button 
-            onClick={() => window.print()}
-            className="flex items-center gap-3 text-white px-8 py-3 font-bold text-sm bg-blue-600 rounded-xl hover:bg-blue-500 active:scale-95 transition-all shadow-lg shadow-blue-500/30"
-          >
-            <Download size={18} />
-            生成报告 (PDF)
-          </button>
-        </div>
-      </div>
-
-      <style>{`
-        @media print {
-          .no-print, header, .fixed, button, .bg-blue-600.rounded-2xl { display: none !important; }
-          body { background: white !important; }
-          main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-          .rounded-3xl { border-radius: 12px !important; border: none !important; border-bottom: 1px solid #eee !important; margin-bottom: 10px !important; box-shadow: none !important; }
-          textarea { background: transparent !important; border: 1px solid #f0f0f0 !important; height: auto !important; min-height: 40px !important; }
-          .text-slate-300 { color: #ccc !important; text-decoration: none !important; }
-        }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+    <div class="controls">
+        <button class="btn" onclick="window.print()">保存/下载验收报告</button>
     </div>
-  );
-}
+
+    <h1>燃油车新车提车验收清单</h1>
+    <p class="tip">先验车 → 再付款 → 最后签收！</p>
+
+    <div class="card">
+        <h2>1. 身份与编码核对（三码合一）</h2>
+        <table>
+            <thead><tr><th>检查项</th><th>状态</th><th>备注信息</th></tr></thead>
+            <tbody>
+                <tr><td>VIN码核对 (挡风、B柱、发动机舱)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="输入VIN码后6位"></td></tr>
+                <tr><td>出厂日期 (≤6个月)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="出厂日期："></td></tr>
+                <tr><td>轮胎生产日期 (如3525)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="输入DOT码"></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>2. 外观与机械检测</h2>
+        <table>
+            <thead><tr><th>检查项</th><th>状态</th><th>备注信息</th></tr></thead>
+            <tbody>
+                <tr><td>漆面检测 (45°观察、厚度测试)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="记录瑕疵点"></td></tr>
+                <tr><td>底盘检测 (无油液渗漏、无锈蚀)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="观察避震器"></td></tr>
+                <tr><td>冷启动检测 (3秒启动、无异响)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="怠速转速："></td></tr>
+                <tr><td>仪表里程 (建议≤20km)</td><td><input type="checkbox" onclick="this.closest('tr').classList.toggle('checked')"></td><td><input type="text" placeholder="当前里程："></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>3. 交付文件清单</h2>
+        <table>
+            <tr><td><input type="checkbox"> 发票(三联)</td><td><input type="checkbox"> 合格证/一致性证书</td><td><input type="checkbox"> 三包凭证</td></tr>
+            <tr><td><input type="checkbox"> PDI检测报告</td><td><input type="checkbox"> 保险单据</td><td><input type="checkbox"> 车匙(2把)</td></tr>
+        </table>
+    </div>
+
+    <footer style="text-align: center; color: #999; padding: 20px;">
+        生成时间：<span id="date"></span> | 维权电话：12315
+    </footer>
+
+    <script>document.getElementById('date').innerText = new Date().toLocaleString();</script>
+</body>
+</html>
