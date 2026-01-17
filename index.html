@@ -3,49 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>燃油车提车验收清单-2026</title>
+    <title>燃油车提车验收清单-全内容版</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; padding: 15px; background: #f4f4f7; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        h1 { font-size: 20px; text-align: center; color: #2c3e50; margin-bottom: 5px; }
-        .subtitle { text-align: center; font-size: 12px; color: #e74c3c; margin-bottom: 20px; font-weight: bold; }
-        .btn-download { display: block; width: 100%; padding: 12px; background: #3498db; color: #fff; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; cursor: pointer; text-align: center; }
-        .section-title { background: #f8f9fa; padding: 8px 12px; border-left: 4px solid #3498db; margin: 20px 0 10px; font-weight: bold; font-size: 16px; }
-        .item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
-        .item:last-child { border-bottom: none; }
-        .item.checked { background: #eef7fe; color: #3498db; }
-        .item input { width: 20px; height: 20px; margin-right: 15px; pointer-events: none; }
-        .label { flex: 1; font-size: 15px; }
-        @media print { .btn-download { display: none; } .container { box-shadow: none; border: 1px solid #eee; } }
+        :root { --primary: #3498db; }
+        body { font-family: "Microsoft YaHei", sans-serif; line-height: 1.5; padding: 15px; background: #f8f9fa; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 22px; text-align: center; color: #2c3e50; margin-bottom: 5px; }
+        .tip { text-align: center; font-size: 13px; color: #e74c3c; margin-bottom: 20px; font-weight: bold; }
+        .btn-box { position: sticky; top: 0; background: #fff; padding: 10px 0; z-index: 100; border-bottom: 1px solid #eee; }
+        .btn-download { display: block; width: 100%; padding: 15px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .section-title { background: #ebf5fb; padding: 10px 15px; border-left: 5px solid var(--primary); margin: 25px 0 10px; font-weight: bold; font-size: 17px; color: #2980b9; }
+        .item { display: flex; align-items: flex-start; padding: 14px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.2s; }
+        .item:hover { background: #fafafa; }
+        .item.checked { background: #eef7fe; border-left: 3px solid var(--primary); }
+        .item input { width: 22px; height: 22px; margin-right: 15px; flex-shrink: 0; pointer-events: none; }
+        .label { font-size: 15px; line-height: 1.4; }
+        @media print { .btn-box { display: none; } .container { box-shadow: none; width: 100%; margin: 0; padding: 0; } body { background: #fff; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <button class="btn-download" onclick="window.print()">点击下载/保存为 PDF 报告</button>
-    <h1>燃油车新车验收清单</h1>
-    <div class="subtitle">原则：先验车 → 再付款 → 最后签收</div>
+    <div class="btn-box">
+        <button class="btn-download" onclick="window.print()">保存/导出 PDF 验收报告</button>
+    </div>
+    <h1>燃油车新车提车验收清单（2026全内容版）</h1>
+    <div class="tip">核心原则：先验车 → 再付款 → 最后签收！全程拍照存证！</div>
 
-    <div class="section-title">1. 证件与编码</div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">身份证、驾驶证、购车合同</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">VIN码核对：挡风、B柱、发动机舱三码合一</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">出厂日期 ≤6个月（进口≤1年）</span></div>
+    <div class="section-title">1. 验车准备与身份核验</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">必备物品：身份证、驾驶证、购车合同、收据、手电筒、湿纸巾</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">三码合一：核对前挡风玻璃、副驾驶B柱铭牌、发动机舱内的 VIN 码</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">日期检查：出厂日期 ≤6个月（进口≤1年）；车架号第10位匹配年份（S=2025）</span></div>
 
-    <div class="section-title">2. 外观检测</div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">漆面检测：无色差、划痕、补漆痕迹</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">玻璃与轮胎：日期早于整车出厂日期</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">底盘：无磕碰、无油液渗漏</span></div>
+    <div class="section-title">2. 外观全面检测</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">漆面检测：逆光45°观察无色差、划痕、凹坑（厚度参考120-180μm）</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">缝隙检查：车门、引擎盖缝隙均匀（公差 ±1.5mm），无补漆痕迹</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">玻璃日期：全车日期早于出厂日期 ≤3个月，无裂纹</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">轮胎检测：DOT编码日期一致，胎毛完好，无明显磨损或鼓包</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">底盘检测：纵梁无损伤，底盘无锈蚀、磕碰，无油液渗漏痕迹</span></div>
 
-    <div class="section-title">3. 机械与内饰</div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">里程表：读数 ≤50km</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">发动机：冷启动稳定，无异响</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">功能检测：空调、灯光、天窗、音响全好</span></div>
+    <div class="section-title">3. 动力与机械系统</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">发动机冷启动：3秒内成功，怠速稳定（750±50转/分），无抖动</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">液位检查：机油（MIN-MAX之间/淡黄色）、玻璃水、冷却液正常</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">变速箱测试：P-R-N-D 换挡顺畅，无异响，D挡怠速不溜车</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">排气管：内壁无大量黑色积碳，避免烧机油风险</span></div>
 
-    <div class="section-title">4. 必备资料</div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">机动车销售发票（三联）</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">合格证、一致性证书、环保清单</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">三包凭证、保养手册、PDI报告</span></div>
-    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">钥匙(2把)、随车工具(灭火器/反光衣)</span></div>
+    <div class="section-title">4. 内饰与智能化检测</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">里程核对：仪表盘读数 ≤20km（最佳），≤50km 为可接受范围</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">座椅与内饰：拆开塑料膜检查无划痕污渍，电动调节功能顺畅</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">中控功能：屏幕无坏点，触摸灵敏，测试 CarPlay/蓝牙及所有 USB 接口</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">空调灯光：制冷/制热无异味；两人配合测试全车内外灯光及转向灯</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">安全配置：安全带伸缩正常，气囊盖板无撬动，三角牌/反光背心齐全</span></div>
+
+    <div class="section-title">5. 交付文件与随车工具</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">机动车销售发票（三联）、车辆合格证、一致性证书、完税证明</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">三包凭证、保养手册（含首保券）、PDI 交付检测报告</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">随车工具：2把钥匙、备胎、千斤顶、轮胎扳手、拖车钩、灭火器</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">赠品核对：行车记录仪（含卡）、贴膜（质保卡）、保养套餐入库记录</span></div>
+
+    <div class="section-title">6. 动态路试与留证</div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">路试：加速无迟滞，刹车不跑偏，转向回正自然，过减速带无异响</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">OBD检测：确认无未处理故障码，ECU版本正常</span></div>
+    <div class="item" onclick="toggleItem(this)"><input type="checkbox"><span class="label">拍照存证：车架号、里程表、轮胎日期、漆面全景、发票、PDI报告</span></div>
 </div>
 
 <script>
