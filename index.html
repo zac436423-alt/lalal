@@ -1,388 +1,80 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>动态验收清单 - 2026版燃油车</title>
-    <style>
-        :root {
-            --primary-color: #3498db;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --bg-color: #f4f7f6;
-            --card-bg: #ffffff;
-            --text-color: #2c3e50;
-        }
+\documentclass[11pt, a4paper]{article}
 
-        body {
-            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            line-height: 1.6;
-        }
+% --- UNIVERSAL PREAMBLE BLOCK ---
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2cm, right=2cm]{geometry}
+\usepackage{fontspec}
+\usepackage{amssymb} % For checkboxes
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{titlesec}
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
+% Using Japanese/Chinese compatible Noto Sans
+\usepackage[japanese, bidi=basic, provide=*]{babel}
+\babelprovide[import, onchar=ids fonts]{japanese}
+\babelprovide[import, onchar=ids fonts]{english}
 
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+\babelfont{rm}{Noto Sans}
+\babelfont[japanese]{rm}{Noto Sans CJK JP}
 
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
+\setlist[itemize]{label=$\square$}
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
 
-        .tip-banner {
-            background-color: #fff3f3;
-            border-left: 5px solid var(--danger-color);
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 4px;
-            font-size: 0.95em;
-        }
+% --- DOCUMENT CONTENT ---
+\begin{document}
 
-        .module {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-bottom: 25px;
-            border: 1px solid #eee;
-        }
+\begin{center}
+    {\huge \textbf{2026年新车验收标准检查单}} \\
+    \vspace{2mm}
+    {\small 适用场景：新车交付 / 二手车提车参考 | 发布日期：2026-01-17}
+\end{center}
 
-        h2 {
-            color: var(--primary-color);
-            font-size: 1.25rem;
-            margin-top: 0;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+\section{1. 核心信息与证件核对 (身份确认)}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{车架号 (VIN) 核对：} 与合同、合格证、发票、前挡玻璃左下角、B柱铭牌五处一致。
+    \item \textbf{生产日期：} 建议 $\le 3$ 个月（超过6个月需确认是否为库存车）。
+    \item \textbf{里程表读数：} 理想状态 $\le 20$km，超过 50km 需重点询问原因。
+    \item \textbf{钥匙核对：} 至少 2 把智能/机械钥匙，功能操作正常。
+\end{itemize}
 
-        .item-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0;
-        }
+\section{2. 外观与玻璃/轮胎日期}
+\begin{itemize}
+    \item \textbf{车漆检查：} 逆光观察，检查前后保险杠、车门边缘是否有色差、划痕或补漆痕迹。
+    \item \textbf{接缝密合度：} 引擎盖、后备箱、四个车门缝隙是否均匀对称。
+    \item \textbf{全车玻璃日期：} 检查日期代码，应早于整车出厂日期且全车基本一致。
+    \item \textbf{轮胎生产日期：} 检查 4 位数字编码（如 3523 表示23年35周），四条胎应接近且早于整车日期。
+    \item \textbf{车灯外观：} 检查灯罩内是否有水雾、裂纹或严重划痕。
+\end{itemize}
 
-        .item-row {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #f9f9f9;
-            transition: background 0.2s;
-        }
+\section{3. 内饰、功能与电子设备}
+\begin{itemize}
+    \item \textbf{内饰完整性：} 拆开塑料膜检查座椅皮质是否有褶皱、污渍；安全带拉伸顺畅。
+    \item \textbf{空调系统：} 测试冷/暖风，检查最大风量噪音及出风口异味。
+    \item \textbf{中控/液晶屏：} 检查屏幕坏点、触摸灵敏度、CarPlay/蓝牙连接。
+    \item \textbf{按键/天窗：} 喇叭、车窗升降（防夹）、天窗开合无异响、遮阳帘正常。
+    \item \textbf{辅助影像：} 倒车影像/360环影清晰度，雷达报警声及引导线随动。
+\end{itemize}
 
-        .item-row:hover {
-            background-color: #fcfcfc;
-        }
+\section{4. 机械试车 (建议园区内路试)}
+\begin{itemize}
+    \item \textbf{发动机启动：} 冷车启动顺畅，怠速平稳无异响。
+    \item \textbf{换挡感受：} P-R-N-D 切换顺滑，无明显顿挫或金属撞击声。
+    \item \textbf{制动/转向：} 刹车灵敏无异响，方向盘回正自然，无卡滞。
+\end{itemize}
 
-        .item-row.checked {
-            color: #95a5a6;
-            text-decoration: line-through;
-        }
+\section{5. 交付文件与赠品 (离店前必查)}
+\begin{itemize}
+    \item 发票（三联）、合格证、一致性证书、环保清单、三包凭证、说明书、绿本（全款）。
+    \item 随车工具：三角牌、反光背心、灭火器、备胎/补胎工具、千斤顶。
+    \item 赠品核对：行车记录仪（含卡）、车膜（质保卡）、脚垫、保养次数（入系统）。
+\end{itemize}
 
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 12px;
-            cursor: pointer;
-        }
+\vspace{1cm}
+\begin{tabularx}{\textwidth}{l X l X}
+    \toprule
+    检查人签字: & \underline{\hspace{4cm}} & 检查日期: & \underline{\hspace{4cm}} \\
+    车辆VIN: & \underline{\hspace{4cm}} & 最终结论: & $\square$ 通过 \quad $\square$ 存在问题 \\
+    \bottomrule
+\end{tabularx}
 
-        .item-text {
-            flex-grow: 1;
-        }
-
-        .actions {
-            position: sticky;
-            bottom: 20px;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 40px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-add {
-            background-color: #f0f0f0;
-            color: #666;
-            font-size: 0.85em;
-            padding: 5px 12px;
-        }
-
-        .btn-add:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-download {
-            background-color: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-        }
-
-        .btn-clear {
-            background-color: var(--danger-color);
-            color: white;
-        }
-
-        .btn-save {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        @media print {
-            .actions, .btn-add, .delete-btn {
-                display: none !important;
-            }
-            body {
-                background: white;
-                padding: 0;
-            }
-            .module {
-                box-shadow: none;
-                border: 1px solid #ccc;
-                break-inside: avoid;
-            }
-        }
-
-        .delete-btn {
-            color: #ccc;
-            background: none;
-            border: none;
-            padding: 0 5px;
-            font-size: 18px;
-        }
-        
-        .delete-btn:hover {
-            color: var(--danger-color);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px;
-        }
-        
-        .modal-input {
-            width: 100%;
-            padding: 10px;
-            margin: 15px 0;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header>
-        <h1>新车提车验收清单</h1>
-        <p>专业、全面、可自定义的购车伴侣</p>
-    </header>
-
-    <div class="tip-banner">
-        <strong>💡 核心提醒：</strong>先验车 → 再付款 → 最后签收！<br>
-        验车前务必洗车，在充足的光线下进行，全程拍照留证。
-    </div>
-
-    <div id="checklist-container">
-        <!-- 模块将由 JS 动态渲染 -->
-    </div>
-
-    <div class="actions">
-        <button class="btn-download" onclick="window.print()">
-            📥 下载/打印清单
-        </button>
-        <button class="btn-clear" onclick="clearData()">
-            🗑️ 清空进度
-        </button>
-    </div>
-</div>
-
-<!-- 添加项的弹窗 -->
-<div id="addModal" class="modal">
-    <div class="modal-content">
-        <h3>添加新清单项</h3>
-        <input type="text" id="newItemInput" class="modal-input" placeholder="输入验收项内容...">
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="closeModal()">取消</button>
-            <button class="btn-save" onclick="confirmAddItem()">确认添加</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // 初始数据结构（基于上传文档）
-    const defaultData = [
-        {
-            title: "1. 验车前必备物品",
-            items: ["身份证、驾驶证", "购车合同、收据", "不限额银行卡", "湿纸巾（区分真假划痕）", "手机闪光灯", "充电宝、数据线"]
-        },
-        {
-            title: "2. 身份与编码核对",
-            items: ["前挡风玻璃VIN码", "副驾驶B柱铭牌VIN码", "发动机舱VIN码", "VIN码与发票、合格证一致", "出厂日期≤6个月", "车架号第10位匹配年份"]
-        },
-        {
-            title: "3. 外观全面检测",
-            items: ["漆面：无色差、划痕、凹坑", "缝隙：车门/引擎盖缝隙均匀", "玻璃：全车日期早于出厂日期", "轮胎：DOT编码日期一致，胎毛完好", "底盘：无锈蚀、磕碰、渗漏"]
-        },
-        {
-            title: "4. 动力系统检测",
-            items: ["冷启动：3秒内成功，怠速稳定", "机油：液位正常，颜色淡黄", "油液：玻璃水、冷却液液位正常", "变速箱：换挡顺畅无顿挫", "排气管：内壁无大量黑渍"]
-        },
-        {
-            title: "5. 内饰与功能验证",
-            items: ["里程：仪表盘≤50km", "钥匙：2把齐全且感应灵敏", "座椅：无划痕污渍，调节顺滑", "中控：屏幕无坏点，各接口正常", "空调：制冷制热及风量正常", "灯光：全车灯组功能可用"]
-        },
-        {
-            title: "6. 文件与随车物品",
-            items: ["发票、合格证、一致性证书", "三包凭证、保养手册", "保险单、PDI报告", "备胎、千斤顶、扳手、拖车钩", "灭火器、三角牌、反光衣"]
-        }
-    ];
-
-    let currentData = [];
-    let checkedState = {};
-    let activeModuleIndex = null;
-
-    // 初始化加载
-    function init() {
-        const savedData = localStorage.getItem('car_checklist_data');
-        const savedState = localStorage.getItem('car_checklist_state');
-        
-        currentData = savedData ? JSON.parse(savedData) : defaultData;
-        checkedState = savedState ? JSON.parse(savedState) : {};
-        
-        render();
-    }
-
-    // 渲染页面
-    function render() {
-        const container = document.getElementById('checklist-container');
-        container.innerHTML = '';
-
-        currentData.forEach((module, mIdx) => {
-            const moduleDiv = document.createElement('div');
-            moduleDiv.className = 'module';
-            
-            let itemsHtml = module.items.map((item, iIdx) => {
-                const id = `item-${mIdx}-${iIdx}`;
-                const isChecked = checkedState[id] ? 'checked' : '';
-                return `
-                    <li class="item-row ${isChecked}">
-                        <input type="checkbox" id="${id}" ${checkedState[id] ? 'checked' : ''} onchange="toggleCheck('${id}')">
-                        <span class="item-text">${item}</span>
-                        ${mIdx >= defaultData.length || iIdx >= (defaultData[mIdx]?.items.length || 0) ? `<button class="delete-btn" onclick="deleteItem(${mIdx}, ${iIdx})">×</button>` : ''}
-                    </li>
-                `;
-            }).join('');
-
-            moduleDiv.innerHTML = `
-                <h2>
-                    <span>${module.title}</span>
-                    <button class="btn-add" onclick="openAddItemModal(${mIdx})">+ 添加</button>
-                </h2>
-                <ul class="item-list">
-                    ${itemsHtml}
-                </ul>
-            `;
-            container.appendChild(moduleDiv);
-        });
-    }
-
-    // 勾选处理
-    function toggleCheck(id) {
-        checkedState[id] = document.getElementById(id).checked;
-        saveState();
-        render();
-    }
-
-    // 添加新项
-    function openAddItemModal(index) {
-        activeModuleIndex = index;
-        document.getElementById('addModal').style.display = 'flex';
-        document.getElementById('newItemInput').focus();
-    }
-
-    function closeModal() {
-        document.getElementById('addModal').style.display = 'none';
-        document.getElementById('newItemInput').value = '';
-    }
-
-    function confirmAddItem() {
-        const val = document.getElementById('newItemInput').value.trim();
-        if (val) {
-            currentData[activeModuleIndex].items.push(val);
-            saveData();
-            render();
-            closeModal();
-        }
-    }
-
-    // 删除项
-    function deleteItem(mIdx, iIdx) {
-        currentData[mIdx].items.splice(iIdx, 1);
-        saveData();
-        render();
-    }
-
-    // 数据持久化
-    function saveData() {
-        localStorage.setItem('car_checklist_data', JSON.stringify(currentData));
-    }
-
-    function saveState() {
-        localStorage.setItem('car_checklist_state', JSON.stringify(checkedState));
-    }
-
-    function clearData() {
-        if (confirm('确定要清空所有进度和自定义项吗？')) {
-            localStorage.removeItem('car_checklist_data');
-            localStorage.removeItem('car_checklist_state');
-            location.reload();
-        }
-    }
-
-    // 初始调用
-    init();
-
-    // 监听回车键添加
-    document.getElementById('newItemInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') confirmAddItem();
-    });
-</script>
-
-</body>
-</html>
+\end{document}
